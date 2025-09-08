@@ -1,0 +1,4 @@
+review,sentiment,date
+"The food was amazing and the waiter was so friendly",Positive,2025-08-01
+"Terrible experience — the food was cold and the waiter rude",Negative,2025-07-15
+"It was okay, nothing special",Neutral,2025-06-20

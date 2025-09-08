@@ -1,0 +1,10 @@
+streamlit>=1.20
+pandas
+numpy
+scikit-learn
+nltk
+matplotlib
+wordcloud
+text2emotion
+langdetect
+vaderSentiment
