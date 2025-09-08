@@ -8,7 +8,14 @@ A **Streamlit-based NLP web application** that performs **sentiment analysis** o
 ![Last Commit](https://img.shields.io/github/last-commit/Divyansh1101/Sentiment-Analysis-App?style=flat-square)  
 
 ---
+---
 
+## 🌐 Live Demo
+
+Check out the live app here:  
+👉 [Sentiment Analysis App on Streamlit](https://sentiment-analytics.streamlit.app)
+
+---
 ## ✨ Features
 
 - 🧠 **Multi-Model Sentiment Analysis** – Supports **VADER** for polarity detection and **Text2Emotion** for emotion recognition.  
