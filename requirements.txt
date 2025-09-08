@@ -10,3 +10,5 @@ text2emotion==0.0.5
 langdetect==1.0.9
 vaderSentiment==3.3.2
 shap==0.46.0
+text2emotion==0.0.5
+emoji==1.7.0
