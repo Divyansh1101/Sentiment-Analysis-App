@@ -26,7 +26,7 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 st.set_page_config(
     layout="wide", 
     page_title="Sentiment Analysis App", 
-    page_icon="ðŸ“",
+    page_icon="📝",                # Correct Memo emoji!
     initial_sidebar_state="expanded"
 )
 
@@ -115,7 +115,7 @@ def process_csv_file(uploaded_file):
         df = pd.read_csv(uploaded_file)
 
         # Display basic info about the dataset
-        st.subheader("ðŸ“Š Dataset Overview")
+        st.subheader("📋 Dataset Overview")
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -126,31 +126,31 @@ def process_csv_file(uploaded_file):
             st.metric("Data Types", len(df.dtypes.unique()))
 
         # Show first few rows
-        st.subheader("ðŸ” Data Preview")
+        st.subheader("🔍 Data Preview")
         st.dataframe(df.head(10), use_container_width=True)
 
         # Let user select text column for analysis
         text_columns = df.select_dtypes(include=['object']).columns.tolist()
 
         if text_columns:
-            st.subheader("ðŸŽ¯ Select Text Column for Analysis")
+            st.subheader("🎯 Select Text Column for Analysis")
             selected_column = st.selectbox(
                 "Choose the column containing text data:", 
                 text_columns,
                 help="Select the column that contains the text you want to analyze"
             )
 
-            if st.button("ðŸš€ Start Sentiment Analysis", type="primary"):
+            if st.button("🚀 Start Sentiment Analysis", type="primary"):
                 with st.spinner("Analyzing sentiments... This may take a moment."):
                     results = perform_sentiment_analysis(df, selected_column)
                     st.session_state.processed_data = df
                     st.session_state.analysis_results = results
 
         else:
-            st.error("âŒ No text columns found in the dataset. Please ensure your CSV contains text data.")
+            st.error("❌ No text columns found in the dataset. Please ensure your CSV contains text data.")
 
     except Exception as e:
-        st.error(f"âŒ Error processing CSV file: {e}")
+        st.error(f"❌ Error processing CSV file: {e}")
         st.error("Please make sure your file is a valid CSV format.")
         st.code(traceback.format_exc())
 
@@ -208,7 +208,7 @@ def perform_sentiment_analysis(df, text_column):
 
 def display_analysis_results(df, results):
     """Display comprehensive analysis results"""
-    st.success("âœ… Analysis completed successfully!")
+    st.success("✅ Analysis completed successfully!")
 
     # Create results dataframe
     results_df = df.copy()
@@ -229,11 +229,11 @@ def display_analysis_results(df, results):
             results_df[f'Emotion_{key}'] = [emotions.get(key, 0) if emotions else 0 for emotions in results['emotions']]
 
     # Display results
-    st.subheader("ðŸ“ˆ Analysis Results")
+    st.subheader("📈 Analysis Results")
     st.dataframe(results_df, use_container_width=True)
 
     # Sentiment distribution
-    st.subheader("ðŸ“Š Sentiment Distribution")
+    st.subheader("📊 Sentiment Distribution")
     sentiment_counts = pd.Series(results['sentiments']).value_counts()
 
     col1, col2 = st.columns(2)
@@ -257,7 +257,7 @@ def display_analysis_results(df, results):
         st.pyplot(fig)
 
     # Summary statistics
-    st.subheader("ðŸ“‹ Summary Statistics")
+    st.subheader("📊 Summary Statistics")
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -268,10 +268,10 @@ def display_analysis_results(df, results):
         st.metric("Neutral Texts", sentiment_counts.get('Neutral', 0))
 
     # Download processed data
-    st.subheader("ðŸ’¾ Download Results")
+    st.subheader("📥 Download Results")
     csv = results_df.to_csv(index=False)
     st.download_button(
-        label="ðŸ“¥ Download Analysis Results (CSV)",
+        label="📥 Download Analysis Results (CSV)",
         data=csv,
         file_name=f"sentiment_analysis_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
         mime="text/csv"
@@ -294,7 +294,7 @@ def analyze_manual_text(text):
         emotions = analyze_emotion_text2emotion(cleaned_text)
 
         # Display results
-        st.subheader("ðŸ” Analysis Results")
+        st.subheader("🔬 Analysis Results")
 
         col1, col2 = st.columns(2)
 
@@ -306,13 +306,13 @@ def analyze_manual_text(text):
                 # Overall sentiment
                 compound = vader_scores['compound']
                 if compound >= 0.05:
-                    sentiment = 'ðŸ˜Š Positive'
+                    sentiment = '😊 Positive'
                     st.success(f"Overall Sentiment: {sentiment}")
                 elif compound <= -0.05:
-                    sentiment = 'ðŸ˜ž Negative'
+                    sentiment = '😞 Negative'
                     st.error(f"Overall Sentiment: {sentiment}")
                 else:
-                    sentiment = 'ðŸ˜ Neutral'
+                    sentiment = '😐 Neutral'
                     st.info(f"Overall Sentiment: {sentiment}")
 
         with col2:
@@ -327,19 +327,19 @@ def analyze_manual_text(text):
 
 # Main app interface
 def main():
-    st.title("ðŸ“ Sentiment Analysis App (Stable Build)")
+    st.title("📝 Sentiment Analysis App (Stable Build)")
     st.markdown("---")
 
     # Sidebar
-    st.sidebar.header("âš™ï¸ Settings")
+    st.sidebar.header("⚙️ Settings")
     analysis_mode = st.sidebar.radio(
         "Choose Analysis Mode:",
-        ["ðŸ“„ File Upload", "âœï¸ Manual Text Input"],
+        ["📤 File Upload", "✏️ Manual Text Input"],
         help="Select how you want to input text for analysis"
     )
 
-    if analysis_mode == "ðŸ“„ File Upload":
-        st.header("ðŸ“¤ File Upload Analysis")
+    if analysis_mode == "📤 File Upload":
+        st.header("📤 File Upload Analysis")
         st.markdown("Upload a CSV file containing text data for sentiment analysis.")
 
         uploaded_file = st.file_uploader(
@@ -349,7 +349,7 @@ def main():
         )
 
         if uploaded_file is not None:
-            st.success(f"âœ… File '{uploaded_file.name}' uploaded successfully!")
+            st.success(f"✅ File '{uploaded_file.name}' uploaded successfully!")
 
             # File details
             file_details = {
@@ -367,7 +367,7 @@ def main():
                 display_analysis_results(st.session_state.processed_data, st.session_state.analysis_results)
 
     else:  # Manual text input
-        st.header("âœï¸ Manual Text Analysis")
+        st.header("✏️ Manual Text Analysis")
         st.markdown("Enter text manually for quick sentiment analysis.")
 
         manual_text = st.text_area(
@@ -377,7 +377,7 @@ def main():
             help="Enter any text you want to analyze for sentiment and emotions"
         )
 
-        if st.button("ðŸ”¬ Analyze Text", type="primary"):
+        if st.button("🔬 Analyze Text", type="primary"):
             if manual_text.strip():
                 analyze_manual_text(manual_text)
             else:
@@ -388,12 +388,12 @@ def main():
     st.markdown(
         """
         <div style='text-align: center'>
-            <p>ðŸ’¡ <strong>Tip:</strong> For best results, ensure your CSV file has clear column headers and text data.</p>
-            <p>Built with â¤ï¸ using Streamlit | Powered by VADER & Text2Emotion</p>
+            <p>💡 <strong>Tip:</strong> For best results, ensure your CSV file has clear column headers and text data.</p>
+            <p>Built with ❤️ using Streamlit | Powered by VADER & Text2Emotion</p>
         </div>
         """, 
         unsafe_allow_html=True
     )
 
 if __name__ == "__main__":
-    main()
+    main() 
