@@ -302,7 +302,7 @@ def analyze_manual_text(text):
 
 # Main app interface
 def main():
-    st.title("📝 Sentiment Analysis App (Stable Build)")
+    st.title("📝 Sentiment Analysis App")
     st.markdown("---")
 
     # Sidebar
