@@ -22,11 +22,18 @@ from nltk.tokenize import word_tokenize
 from nltk import pos_tag, RegexpParser
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
-# Page configuration
+# Ensure all required NLTK packages are downloaded
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('stopwords')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('vader_lexicon')
+
+# Page configuration with correct emoji
 st.set_page_config(
     layout="wide", 
     page_title="Sentiment Analysis App", 
-    page_icon="📝",                # Correct Memo emoji!
+    page_icon="📝",
     initial_sidebar_state="expanded"
 )
 
@@ -35,38 +42,6 @@ if 'processed_data' not in st.session_state:
     st.session_state.processed_data = None
 if 'analysis_results' not in st.session_state:
     st.session_state.analysis_results = None
-
-# NLTK downloads
-nltk_downloaded = False
-def download_nltk():
-    global nltk_downloaded
-    if nltk_downloaded:
-        return
-    try:
-        nltk.data.find("tokenizers/punkt")
-    except:
-        nltk.download("punkt", quiet=True)
-    try:
-        nltk.data.find("corpora/stopwords")
-    except:
-        nltk.download("stopwords", quiet=True)
-    try:
-        nltk.data.find("corpora/wordnet")
-    except:
-        nltk.download("wordnet", quiet=True)
-    try:
-        nltk.data.find("taggers/averaged_perceptron_tagger")
-    except:
-        nltk.download("averaged_perceptron_tagger", quiet=True)
-    try:
-        nltk.data.find("sentiment/vader_lexicon")
-    except:
-        nltk.download("vader_lexicon", quiet=True)
-    nltk_downloaded = True
-
-# Download required NLTK data
-with st.spinner("Initializing NLP components..."):
-    download_nltk()
 
 STOPWORDS = set(stopwords.words("english"))
 vader = SentimentIntensityAnalyzer()
@@ -389,11 +364,11 @@ def main():
         """
         <div style='text-align: center'>
             <p>💡 <strong>Tip:</strong> For best results, ensure your CSV file has clear column headers and text data.</p>
-            <p>Built with ❤️ using Streamlit | Powered by VADER & Text2Emotion</p>
+            <p>Built using Streamlit </p>
         </div>
         """, 
         unsafe_allow_html=True
     )
 
 if __name__ == "__main__":
-    main() 
+    main()
