@@ -1,55 +1,20 @@
-# Streamlit Sentiment Analysis App
+# Sentiment Analysis App - Streamlit Ready
 
-A full-featured Sentiment Analysis web application built with **Streamlit**.
+This repository contains a Streamlit Sentiment Analysis application designed to be stable and deployable to Streamlit Cloud.
 
-## Features
+See `streamlit_app.py` for the main app.
 
-- Dataset upload (CSV) with `review`, `sentiment`, `date` columns.
-- Manual review text input.
-- Synthetic data generation if no file is uploaded.
-- Preprocessing: cleaning, tokenization, stopword removal, language detection.
-- Sentiment classification using TF-IDF + Logistic Regression (or a lightweight fallback).
-- Aspect-based sentiment detection (food, service, price) via keyword matching.
-- Emotion detection via `text2emotion`.
-- Visualizations: word clouds, sentiment distribution, time-series charts.
-- Explainability: top contributing features per class (when model is trained).
-- CSV and PDF report generation.
-- Robust error handling and helpful messages.
+## Deploying to Streamlit Cloud
 
-## Quickstart (local)
+1. Push to GitHub.
+2. On https://share.streamlit.io create a new app, connect repo and set main file to `streamlit_app.py`.
+3. Streamlit will install from `requirements.txt`.
 
-1. Clone or download the project and install dependencies:
+## Docker
+
+Build and run locally:
 
 ```bash
-python -m venv venv
-source venv/bin/activate    # on Windows use `venv\\Scripts\\activate`
-pip install -r requirements.txt
+docker build -t sentiment-app:latest .
+docker run -p 8501:8501 sentiment-app:latest
 ```
-
-2. Run the app:
-
-```bash
-streamlit run streamlit_app.py
-```
-
-3. Upload a CSV with columns `review`, `sentiment`, `date` or use the synthetic dataset.
-
-## Files
-
-- `streamlit_app.py` — main Streamlit app.
-- `requirements.txt` — Python dependencies.
-- Example synthetic data is generated automatically by the app.
-
-## Notes
-
-- The app downloads required NLTK data the first time it runs.
-- For production deployment (Streamlit Cloud), ensure you add a `packages.txt` or proper deployment config if necessary.
-
-Enjoy! 🎉
-
-## Improvements added
-
-- GitHub Actions CI workflow to run basic tests (`.github/workflows/ci.yml`).
-- Improved aspect extraction using noun-phrase chunking and VADER sentiment scoring for aspect-level sentiment.
-- Updated requirements to include `vaderSentiment`.
-
