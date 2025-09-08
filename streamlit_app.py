@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -16,13 +15,28 @@ import text2emotion as te
 from langdetect import detect
 import base64
 import shap
+import traceback
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk import pos_tag, RegexpParser
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
-st.set_page_config(layout="wide", page_title="Sentiment Analysis App", page_icon="📝")
+# Page configuration
+st.set_page_config(
+    layout="wide", 
+    page_title="Sentiment Analysis App", 
+    page_icon="ðŸ“",
+    initial_sidebar_state="expanded"
+)
+
+# Initialize session state
+if 'processed_data' not in st.session_state:
+    st.session_state.processed_data = None
+if 'analysis_results' not in st.session_state:
+    st.session_state.analysis_results = None
+
+# NLTK downloads
 nltk_downloaded = False
 def download_nltk():
     global nltk_downloaded
@@ -31,30 +45,34 @@ def download_nltk():
     try:
         nltk.data.find("tokenizers/punkt")
     except:
-        nltk.download("punkt")
+        nltk.download("punkt", quiet=True)
     try:
         nltk.data.find("corpora/stopwords")
     except:
-        nltk.download("stopwords")
+        nltk.download("stopwords", quiet=True)
     try:
         nltk.data.find("corpora/wordnet")
     except:
-        nltk.download("wordnet")
+        nltk.download("wordnet", quiet=True)
     try:
         nltk.data.find("taggers/averaged_perceptron_tagger")
     except:
-        nltk.download("averaged_perceptron_tagger")
+        nltk.download("averaged_perceptron_tagger", quiet=True)
     try:
         nltk.data.find("sentiment/vader_lexicon")
     except:
-        nltk.download("vader_lexicon")
+        nltk.download("vader_lexicon", quiet=True)
     nltk_downloaded = True
 
-download_nltk()
+# Download required NLTK data
+with st.spinner("Initializing NLP components..."):
+    download_nltk()
+
 STOPWORDS = set(stopwords.words("english"))
 vader = SentimentIntensityAnalyzer()
 
 def simple_clean(text):
+    """Clean text data"""
     if not isinstance(text, str):
         return ""
     text = text.strip()
@@ -64,78 +82,318 @@ def simple_clean(text):
     return text
 
 def tokenize_and_remove_stopwords(text, lang='en'):
+    """Tokenize and remove stopwords"""
     tokens = word_tokenize(text)
     if lang.startswith("en"):
-        tokens = [t for t in tokens if t.lower() not in STOPWORDS and len(t)>1]
+        tokens = [t for t in tokens if t.lower() not in STOPWORDS and len(t) > 1]
     else:
-        tokens = [t for t in tokens if len(t)>1]
+        tokens = [t for t in tokens if len(t) > 1]
     return tokens
 
-def generate_synthetic_data(n=200):
-    reviews=[]
-    labels=[]
-    dates=[]
-    sample_pos=["The food was amazing and the service was excellent.","Loved the ambience and the friendly staff!","Best meal I've had in weeks, will come again."]
-    sample_neg=["Food was cold and tasteless, very disappointed.","Service was slow and the waiter was rude.","Will not recommend this place to anyone."]
-    sample_neu=["The restaurant is located downtown. It opens at 10am.","I visited yesterday. Prices are average.","It was an OK experience, nothing special."]
-    for i in range(n):
-        choice = np.random.choice([0,1,2], p=[0.45,0.35,0.20])
-        if choice==0:
-            text=np.random.choice(sample_pos); labels.append("Positive")
-        elif choice==1:
-            text=np.random.choice(sample_neg); labels.append("Negative")
+def analyze_sentiment_vader(text):
+    """Analyze sentiment using VADER"""
+    try:
+        scores = vader.polarity_scores(text)
+        return scores
+    except Exception as e:
+        st.error(f"Error in VADER analysis: {e}")
+        return None
+
+def analyze_emotion_text2emotion(text):
+    """Analyze emotions using text2emotion"""
+    try:
+        emotions = te.get_emotion(text)
+        return emotions
+    except Exception as e:
+        st.error(f"Error in emotion analysis: {e}")
+        return None
+
+def process_csv_file(uploaded_file):
+    """Process uploaded CSV file"""
+    try:
+        # Read CSV file
+        df = pd.read_csv(uploaded_file)
+
+        # Display basic info about the dataset
+        st.subheader("ðŸ“Š Dataset Overview")
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("Total Rows", len(df))
+        with col2:
+            st.metric("Total Columns", len(df.columns))
+        with col3:
+            st.metric("Data Types", len(df.dtypes.unique()))
+
+        # Show first few rows
+        st.subheader("ðŸ” Data Preview")
+        st.dataframe(df.head(10), use_container_width=True)
+
+        # Let user select text column for analysis
+        text_columns = df.select_dtypes(include=['object']).columns.tolist()
+
+        if text_columns:
+            st.subheader("ðŸŽ¯ Select Text Column for Analysis")
+            selected_column = st.selectbox(
+                "Choose the column containing text data:", 
+                text_columns,
+                help="Select the column that contains the text you want to analyze"
+            )
+
+            if st.button("ðŸš€ Start Sentiment Analysis", type="primary"):
+                with st.spinner("Analyzing sentiments... This may take a moment."):
+                    results = perform_sentiment_analysis(df, selected_column)
+                    st.session_state.processed_data = df
+                    st.session_state.analysis_results = results
+
         else:
-            text=np.random.choice(sample_neu); labels.append("Neutral")
-        reviews.append(text)
-        dates.append((datetime.now() - pd.to_timedelta(np.random.randint(0,365), unit='d')).strftime("%Y-%m-%d"))
-    return pd.DataFrame({"review":reviews,"sentiment":labels,"date":dates})
+            st.error("âŒ No text columns found in the dataset. Please ensure your CSV contains text data.")
 
-# minimal UI to allow tests and functions to be imported
-st.title("Sentiment Analysis App (Stable Build)")
-st.sidebar.header("Settings")
-uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
-manual_review = st.text_area("Manual review")
+    except Exception as e:
+        st.error(f"âŒ Error processing CSV file: {e}")
+        st.error("Please make sure your file is a valid CSV format.")
+        st.code(traceback.format_exc())
 
-# helpers for explainability and bootstrap
-from sklearn.utils import resample
-def compute_shap_for_text(pipeline, X_train_sample, text, top_k=15):
-    try:
-        vec = pipeline.named_steps['tfidfvectorizer']
-        lr = pipeline.named_steps['logisticregression']
-    except:
-        return {}
-    try:
-        Xb = vec.transform(X_train_sample[:200])
-        explainer = shap.LinearExplainer(lr, Xb, feature_dependence="independent")
-        x_vec = vec.transform([text])
-        shap_values = explainer.shap_values(x_vec)
-        feature_names = vec.get_feature_names_out()
-        res = {}
-        for cls_idx, cls in enumerate(lr.classes_):
-            sv = shap_values[cls_idx].ravel()
-            top_idx = np.argsort(np.abs(sv))[-top_k:][::-1]
-            res[cls] = [(feature_names[i], float(sv[i])) for i in top_idx]
-        return res
-    except Exception:
-        return {}
+def perform_sentiment_analysis(df, text_column):
+    """Perform comprehensive sentiment analysis"""
+    results = {
+        'vader_scores': [],
+        'emotions': [],
+        'sentiments': [],
+        'processed_texts': []
+    }
 
-def bootstrap_proba_ci(pipeline_factory, X_train, y_train, text, n_iter=30, alpha=0.05):
-    probs=[]
-    for i in range(n_iter):
-        try:
-            Xb, yb = resample(X_train, y_train)
-            p = pipeline_factory()
-            p.fit(Xb, yb)
-            probs.append(p.predict_proba([text])[0])
-        except:
-            continue
-    if len(probs)==0:
-        return None,None,None
-    probs = np.array(probs)
-    lower = np.percentile(probs, 100*alpha/2.0, axis=0)
-    upper = np.percentile(probs, 100*(1-alpha/2.0), axis=0)
-    mean = probs.mean(axis=0)
-    return mean, lower, upper
+    # Progress bar
+    progress_bar = st.progress(0)
+    status_text = st.empty()
 
-# expose functions for tests
-__all__ = ["simple_clean","tokenize_and_remove_stopwords","generate_synthetic_data","compute_shap_for_text","bootstrap_proba_ci"]
+    total_rows = len(df)
+
+    for i, text in enumerate(df[text_column].astype(str)):
+        # Update progress
+        progress = (i + 1) / total_rows
+        progress_bar.progress(progress)
+        status_text.text(f"Processing {i+1}/{total_rows} texts...")
+
+        # Clean text
+        cleaned_text = simple_clean(text)
+        results['processed_texts'].append(cleaned_text)
+
+        # VADER sentiment analysis
+        vader_scores = analyze_sentiment_vader(cleaned_text)
+        results['vader_scores'].append(vader_scores)
+
+        # Determine overall sentiment
+        if vader_scores:
+            compound = vader_scores['compound']
+            if compound >= 0.05:
+                sentiment = 'Positive'
+            elif compound <= -0.05:
+                sentiment = 'Negative'
+            else:
+                sentiment = 'Neutral'
+        else:
+            sentiment = 'Unknown'
+        results['sentiments'].append(sentiment)
+
+        # Emotion analysis
+        emotions = analyze_emotion_text2emotion(cleaned_text)
+        results['emotions'].append(emotions)
+
+    # Clear progress indicators
+    progress_bar.empty()
+    status_text.empty()
+
+    return results
+
+def display_analysis_results(df, results):
+    """Display comprehensive analysis results"""
+    st.success("âœ… Analysis completed successfully!")
+
+    # Create results dataframe
+    results_df = df.copy()
+    results_df['Processed_Text'] = results['processed_texts']
+    results_df['Sentiment'] = results['sentiments']
+
+    # Add VADER scores
+    if results['vader_scores'] and results['vader_scores'][0] is not None:
+        results_df['VADER_Compound'] = [score['compound'] if score else 0 for score in results['vader_scores']]
+        results_df['VADER_Positive'] = [score['pos'] if score else 0 for score in results['vader_scores']]
+        results_df['VADER_Negative'] = [score['neg'] if score else 0 for score in results['vader_scores']]
+        results_df['VADER_Neutral'] = [score['neu'] if score else 0 for score in results['vader_scores']]
+
+    # Add emotion scores
+    if results['emotions'] and results['emotions'][0] is not None:
+        emotion_keys = ['Happy', 'Angry', 'Surprise', 'Sad', 'Fear']
+        for key in emotion_keys:
+            results_df[f'Emotion_{key}'] = [emotions.get(key, 0) if emotions else 0 for emotions in results['emotions']]
+
+    # Display results
+    st.subheader("ðŸ“ˆ Analysis Results")
+    st.dataframe(results_df, use_container_width=True)
+
+    # Sentiment distribution
+    st.subheader("ðŸ“Š Sentiment Distribution")
+    sentiment_counts = pd.Series(results['sentiments']).value_counts()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Bar chart
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sentiment_counts.plot(kind='bar', ax=ax, color=['green', 'red', 'gray'])
+        ax.set_title('Sentiment Distribution')
+        ax.set_xlabel('Sentiment')
+        ax.set_ylabel('Count')
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
+
+    with col2:
+        # Pie chart
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sentiment_counts.plot(kind='pie', ax=ax, autopct='%1.1f%%', colors=['green', 'red', 'gray'])
+        ax.set_title('Sentiment Distribution (%)')
+        ax.set_ylabel('')
+        st.pyplot(fig)
+
+    # Summary statistics
+    st.subheader("ðŸ“‹ Summary Statistics")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("Positive Texts", sentiment_counts.get('Positive', 0))
+    with col2:
+        st.metric("Negative Texts", sentiment_counts.get('Negative', 0))
+    with col3:
+        st.metric("Neutral Texts", sentiment_counts.get('Neutral', 0))
+
+    # Download processed data
+    st.subheader("ðŸ’¾ Download Results")
+    csv = results_df.to_csv(index=False)
+    st.download_button(
+        label="ðŸ“¥ Download Analysis Results (CSV)",
+        data=csv,
+        file_name=f"sentiment_analysis_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+        mime="text/csv"
+    )
+
+def analyze_manual_text(text):
+    """Analyze manually entered text"""
+    if not text.strip():
+        st.warning("Please enter some text to analyze.")
+        return
+
+    with st.spinner("Analyzing your text..."):
+        # Clean text
+        cleaned_text = simple_clean(text)
+
+        # VADER analysis
+        vader_scores = analyze_sentiment_vader(cleaned_text)
+
+        # Emotion analysis
+        emotions = analyze_emotion_text2emotion(cleaned_text)
+
+        # Display results
+        st.subheader("ðŸ” Analysis Results")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**VADER Sentiment Scores:**")
+            if vader_scores:
+                st.json(vader_scores)
+
+                # Overall sentiment
+                compound = vader_scores['compound']
+                if compound >= 0.05:
+                    sentiment = 'ðŸ˜Š Positive'
+                    st.success(f"Overall Sentiment: {sentiment}")
+                elif compound <= -0.05:
+                    sentiment = 'ðŸ˜ž Negative'
+                    st.error(f"Overall Sentiment: {sentiment}")
+                else:
+                    sentiment = 'ðŸ˜ Neutral'
+                    st.info(f"Overall Sentiment: {sentiment}")
+
+        with col2:
+            st.write("**Emotion Analysis:**")
+            if emotions:
+                st.json(emotions)
+
+                # Dominant emotion
+                if emotions:
+                    dominant_emotion = max(emotions.items(), key=lambda x: x[1])
+                    st.info(f"Dominant Emotion: {dominant_emotion[0]} ({dominant_emotion[1]:.2f})")
+
+# Main app interface
+def main():
+    st.title("ðŸ“ Sentiment Analysis App (Stable Build)")
+    st.markdown("---")
+
+    # Sidebar
+    st.sidebar.header("âš™ï¸ Settings")
+    analysis_mode = st.sidebar.radio(
+        "Choose Analysis Mode:",
+        ["ðŸ“„ File Upload", "âœï¸ Manual Text Input"],
+        help="Select how you want to input text for analysis"
+    )
+
+    if analysis_mode == "ðŸ“„ File Upload":
+        st.header("ðŸ“¤ File Upload Analysis")
+        st.markdown("Upload a CSV file containing text data for sentiment analysis.")
+
+        uploaded_file = st.file_uploader(
+            "Choose a CSV file",
+            type=["csv"],
+            help="Upload a CSV file with text data. Maximum file size: 200MB"
+        )
+
+        if uploaded_file is not None:
+            st.success(f"âœ… File '{uploaded_file.name}' uploaded successfully!")
+
+            # File details
+            file_details = {
+                "Filename": uploaded_file.name,
+                "File Size": f"{uploaded_file.size} bytes",
+                "File Type": uploaded_file.type
+            }
+            st.json(file_details)
+
+            # Process the file
+            process_csv_file(uploaded_file)
+
+            # Display results if analysis was performed
+            if st.session_state.analysis_results is not None and st.session_state.processed_data is not None:
+                display_analysis_results(st.session_state.processed_data, st.session_state.analysis_results)
+
+    else:  # Manual text input
+        st.header("âœï¸ Manual Text Analysis")
+        st.markdown("Enter text manually for quick sentiment analysis.")
+
+        manual_text = st.text_area(
+            "Enter your text here:",
+            height=150,
+            placeholder="Type or paste your text here for sentiment analysis...",
+            help="Enter any text you want to analyze for sentiment and emotions"
+        )
+
+        if st.button("ðŸ”¬ Analyze Text", type="primary"):
+            if manual_text.strip():
+                analyze_manual_text(manual_text)
+            else:
+                st.warning("Please enter some text to analyze.")
+
+    # Footer
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style='text-align: center'>
+            <p>ðŸ’¡ <strong>Tip:</strong> For best results, ensure your CSV file has clear column headers and text data.</p>
+            <p>Built with â¤ï¸ using Streamlit | Powered by VADER & Text2Emotion</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+
+if __name__ == "__main__":
+    main()
