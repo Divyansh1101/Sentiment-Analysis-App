@@ -31,9 +31,9 @@ Check out the live app here:
 
 ```
 .
-├── .streamlit/               # Streamlit theme & config (config.toml)
-├── local/                    # Dev requirements (requirements-dev.txt)
-├── tests/                    # Unit tests (test_preprocessing.py)
+├── .streamlit/config.toml              # Streamlit theme & config (config.toml)
+├── local/requirements-dev.txt                   # Dev requirements (requirements-dev.txt)
+├── tests/test_preprocessing.py                    # Unit tests (test_preprocessing.py)
 ├── example_dataset.csv        # Sample dataset for testing
 ├── requirements.txt           # App dependencies
 ├── runtime.txt                # Runtime Python version
