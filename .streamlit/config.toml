@@ -1,0 +1,21 @@
+[theme]
+# Default Light Theme
+primaryColor = "#4B9CD3"         
+backgroundColor = "#FFFFFF"      
+secondaryBackgroundColor = "#F5F5F5"
+textColor = "#000000"
+font = "sans serif"
+
+# Dark Theme Variant
+[theme.dark]
+primaryColor = "#90CAF9"         
+backgroundColor = "#0E1117"      
+secondaryBackgroundColor = "#262730"
+textColor = "#FAFAFA"            
+font = "sans serif"
+
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = true
+port = 8501
