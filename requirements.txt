@@ -5,11 +5,8 @@ scikit-learn==1.5.2
 nltk==3.9.1
 matplotlib==3.9.2
 seaborn==0.13.2
-wordcloud==1.9.3
-pillow==10.4.0
 text2emotion==0.0.5
 emoji==1.7.0
 langdetect==1.0.9
 vaderSentiment==3.3.2
-shap==0.46.0
 scipy==1.13.1
